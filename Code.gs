@@ -13,7 +13,7 @@
  * 9. Pega esa URL en index.html donde dice TU_URL_APPS_SCRIPT_AQUI
  */
 
-const SHEET_ID  = '';  // Deja vacío para crear nueva hoja, o pega el ID de tu Google Sheet
+const SHEET_ID  = '1mEwajewLkehcLVWXungGTC-v9qYMSNgJTc6h6Pt3lUg';
 const SHEET_NAME = 'Progreso Excel Academy';
 
 function getOrCreateSheet() {
