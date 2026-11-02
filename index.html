@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Synaptic Excel Academy — Aprende Excel Jugando</title>
+<style>
+:root{
+  --bg:#0a0e1a;--surface:#111827;--card:#1a2235;--border:#1e3a5f;
+  --blue:#1a73e8;--cyan:#00d4ff;--green:#00e676;--yellow:#ffeb3b;
+  --red:#ff5252;--purple:#9c27b0;--text:#e8eaf6;--muted:#7986a3;
+  --font:'Segoe UI',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden}
+/* ── OVERLAY / MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:1000;transition:.3s}
+.overlay.hidden{opacity:0;pointer-events:none}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:40px;max-width:480px;width:90%;animation:pop .4s ease}
+@keyframes pop{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+.modal h2{font-size:1.8rem;margin-bottom:8px;background:linear-gradient(90deg,var(--cyan),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.modal p{color:var(--muted);margin-bottom:24px;font-size:.95rem}
+.modal input{width:100%;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:1rem;margin-bottom:12px;outline:none;transition:.2s}
+.modal input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,212,255,.15)}
+.btn{padding:12px 28px;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;transition:.2s;letter-spacing:.5px}
+.btn-primary{background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff;width:100%}
+.btn-primary:hover{opacity:.9;transform:translateY(-1px)}
+.btn-sm{padding:8px 18px;font-size:.85rem;border-radius:8px}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.btn-ghost:hover{border-color:var(--cyan);color:var(--cyan)}
+/* ── HEADER ── */
+header{padding:20px 32px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--surface)}
+.logo{display:flex;align-items:center;gap:10px;font-size:1.1rem;font-weight:700}
+.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--blue),var(--cyan));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.user-chip{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:50px;padding:6px 14px;font-size:.9rem}
+.user-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;text-transform:uppercase}
+/* ── HERO ── */
+.hero{text-align:center;padding:60px 20px 40px;background:radial-gradient(ellipse at 50% 0%,rgba(26,115,232,.15) 0%,transparent 70%)}
+.hero h1{font-size:2.8rem;font-weight:800;line-height:1.2;margin-bottom:16px}
+.hero h1 span{background:linear-gradient(90deg,var(--cyan),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero p{color:var(--muted);font-size:1.1rem;max-width:560px;margin:0 auto 32px}
+.stats-row{display:flex;justify-content:center;gap:32px;margin-top:32px;flex-wrap:wrap}
+.stat{text-align:center}
+.stat-n{font-size:2rem;font-weight:800;color:var(--cyan)}
+.stat-l{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+/* ── LEVELS ── */
+.levels{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;max-width:960px;margin:0 auto;padding:0 20px 60px}
+.level-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;cursor:pointer;transition:.25s;position:relative;overflow:hidden}
+.level-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent)}
+.level-card:hover{transform:translateY(-4px);border-color:var(--accent);box-shadow:0 8px 32px rgba(0,0,0,.3)}
+.level-card.locked{opacity:.5;cursor:not-allowed}
+.level-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:.8rem;font-weight:600;margin-bottom:16px;background:rgba(var(--accent-rgb),.15);color:var(--accent)}
+.level-card h3{font-size:1.3rem;margin-bottom:8px}
+.level-card p{color:var(--muted);font-size:.9rem;margin-bottom:16px}
+.level-topics{display:flex;flex-wrap:wrap;gap:6px}
+.topic-tag{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:3px 10px;font-size:.75rem;color:var(--muted)}
+.progress-bar{height:6px;background:var(--surface);border-radius:3px;margin-top:20px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;background:var(--accent);transition:width .5s ease}
+.stars{display:flex;gap:4px;margin-top:8px}
+.star{font-size:1.2rem;opacity:.3}.star.on{opacity:1}
+/* ── GAME AREA ── */
+.game-area{display:none;max-width:900px;margin:0 auto;padding:20px}
+.game-area.active{display:block}
+.back-btn{display:flex;align-items:center;gap:8px;color:var(--muted);cursor:pointer;font-size:.9rem;margin-bottom:20px;background:none;border:none}
+.back-btn:hover{color:var(--cyan)}
+.exercise-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:gap}
+.ex-title{font-size:1.4rem;font-weight:700}
+.ex-counter{color:var(--muted);font-size:.9rem}
+.score-badge{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:6px 14px;font-size:.9rem}
+.score-badge span{color:var(--yellow);font-weight:700}
+/* ── EXERCISE CARD ── */
+.ex-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:20px}
+.ex-description{font-size:1.05rem;margin-bottom:20px;line-height:1.6}
+.ex-hint{background:rgba(26,115,232,.1);border:1px solid rgba(26,115,232,.3);border-radius:10px;padding:12px 16px;font-size:.9rem;color:#90caf9;margin-bottom:20px;display:flex;gap:8px;align-items:flex-start}
+/* ── SPREADSHEET ── */
+.spreadsheet{border-radius:10px;overflow:hidden;border:1px solid var(--border);margin-bottom:20px}
+.ss-header{background:#1e2a45;display:grid;font-size:.8rem;color:var(--muted);font-weight:600}
+.ss-row{display:grid;border-top:1px solid var(--border)}
+.ss-cell{padding:8px 12px;border-right:1px solid var(--border);font-size:.9rem;min-height:36px;display:flex;align-items:center}
+.ss-cell:last-child{border-right:none}
+.ss-cell.header{background:#1e2a45;font-size:.8rem;color:var(--muted);font-weight:600;justify-content:center}
+.ss-cell.row-num{background:#1e2a45;width:40px;color:var(--muted);font-size:.8rem;justify-content:center}
+.ss-cell.active-cell{background:rgba(0,212,255,.05);border:2px solid var(--cyan)!important}
+.ss-cell.result{color:var(--green);font-weight:600}
+/* ── FORMULA BAR ── */
+.formula-bar{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 12px;margin-bottom:12px}
+.cell-ref{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:.9rem;color:var(--cyan);min-width:48px;text-align:center}
+.fx-icon{color:var(--blue);font-weight:700;font-size:1rem}
+.formula-input{flex:1;background:none;border:none;color:var(--text);font-family:'Consolas','Courier New',monospace;font-size:.95rem;outline:none}
+/* ── FEEDBACK ── */
+.feedback{border-radius:10px;padding:14px 16px;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px;font-size:.95rem}
+.feedback.correct{background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.3);color:#69f0ae}
+.feedback.wrong{background:rgba(255,82,82,.1);border:1px solid rgba(255,82,82,.3);color:#ff8a80}
+.feedback.hidden{display:none}
+.action-row{display:flex;gap:12px;flex-wrap:wrap}
+.btn-check{background:linear-gradient(135deg,var(--blue),var(--cyan));color:#fff}
+.btn-check:hover{opacity:.9}
+.btn-skip{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.btn-next{background:linear-gradient(135deg,var(--green),#00c853);color:#fff}
+/* ── COMPLETION ── */
+.completion{text-align:center;padding:60px 20px;display:none}
+.completion.active{display:block}
+.trophy{font-size:5rem;margin-bottom:20px;animation:bounce 1s ease infinite alternate}
+@keyframes bounce{from{transform:translateY(0)}to{transform:translateY(-10px)}}
+.completion h2{font-size:2.2rem;font-weight:800;margin-bottom:12px}
+.completion p{color:var(--muted);font-size:1.1rem;margin-bottom:32px}
+.cert-card{background:var(--card);border:2px solid var(--yellow);border-radius:20px;padding:32px;max-width:480px;margin:0 auto 32px;position:relative}
+.cert-card::before{content:'★ CERTIFICADO ★';position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--yellow);color:#000;font-size:.7rem;font-weight:800;padding:2px 16px;border-radius:20px;letter-spacing:2px}
+.cert-name{font-size:1.6rem;font-weight:800;color:var(--cyan);margin:12px 0 4px}
+.cert-level{font-size:1rem;color:var(--muted)}
+.cert-score{font-size:3rem;font-weight:900;color:var(--yellow);margin:16px 0 4px}
+/* ── CONFETTI ── */
+.confetti-piece{position:fixed;width:10px;height:10px;border-radius:2px;pointer-events:none;animation:fall linear forwards;z-index:9999}
+@keyframes fall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 20px;font-size:.9rem;z-index:2000;transform:translateY(80px);opacity:0;transition:.3s}
+.toast.show{transform:translateY(0);opacity:1}
+/* ── LEADERBOARD BTN ── */
+.lb-btn{position:fixed;bottom:24px;left:24px;background:var(--card);border:1px solid var(--border);border-radius:50px;padding:10px 20px;font-size:.85rem;cursor:pointer;z-index:500;transition:.2s}
+.lb-btn:hover{border-color:var(--cyan);color:var(--cyan)}
+/* ── RESPONSIVE ── */
+@media(max-width:600px){
+  .hero h1{font-size:1.8rem}
+  .stats-row{gap:20px}
+  .levels{padding:0 12px 40px}
+  .ex-card{padding:18px}
+}
+</style>
+</head>
+<body>
+
+<!-- REGISTRO -->
+<div class="overlay" id="regOverlay">
+  <div class="modal">
+    <div style="font-size:2.5rem;margin-bottom:12px">📊</div>
+    <h2>Synaptic Excel Academy</h2>
+    <p>Aprende Excel desde cero hasta avanzado jugando. Registra tu progreso y recibe tu certificado.</p>
+    <input type="text" id="regNombre" placeholder="Tu nombre completo" maxlength="60">
+    <input type="email" id="regEmail" placeholder="Tu correo electrónico" maxlength="80">
+    <button class="btn btn-primary" onclick="registrar()">Comenzar 🚀</button>
+    <p style="text-align:center;color:var(--muted);font-size:.8rem;margin-top:12px">
+      Tu progreso se guarda en Google Sheets de Synaptic Analytics
+    </p>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    <div>
+      <div style="font-size:.7rem;color:var(--muted);letter-spacing:1px">SYNAPTIC ANALYTICS</div>
+      <div>Excel Academy</div>
+    </div>
+  </div>
+  <div class="user-chip" id="userChip" style="display:none">
+    <div class="user-avatar" id="userInitial">?</div>
+    <span id="userName">Usuario</span>
+    <span style="color:var(--yellow);margin-left:4px">⭐ <span id="totalScore">0</span></span>
+  </div>
+</header>
+
+<!-- INICIO -->
+<div id="homeView">
+  <div class="hero">
+    <h1>Aprende Excel<br><span>Jugando en Minutos</span></h1>
+    <p>Desde las fórmulas básicas hasta técnicas avanzadas de analítica de datos. ¡Nivel por nivel, con ejercicios reales!</p>
+    <div class="stats-row">
+      <div class="stat"><div class="stat-n">3</div><div class="stat-l">Niveles</div></div>
+      <div class="stat"><div class="stat-n">15</div><div class="stat-l">Ejercicios</div></div>
+      <div class="stat"><div class="stat-n">5</div><div class="stat-l">Temas</div></div>
+      <div class="stat"><div class="stat-n">🏆</div><div class="stat-l">Certificado</div></div>
+    </div>
+  </div>
+
+  <div class="levels" id="levelsGrid"></div>
+</div>
+
+<!-- GAME AREA -->
+<div class="game-area" id="gameView">
+  <button class="back-btn" onclick="backToHome()">← Volver a niveles</button>
+  <div class="exercise-header">
+    <div>
+      <div id="levelLabel" style="font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px"></div>
+      <div class="ex-title" id="exTitle"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="ex-counter" id="exCounter"></div>
+      <div class="score-badge">⭐ <span id="levelScore">0</span> pts</div>
+    </div>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" id="exProgress" style="width:0%"></div></div>
+  <div style="height:20px"></div>
+  <div id="exerciseContainer"></div>
+</div>
+
+<!-- COMPLETADO -->
+<div class="completion" id="completionView">
+  <div class="trophy" id="trophyIcon">🏆</div>
+  <h2 id="compTitle">¡Nivel Completado!</h2>
+  <p id="compSubtitle"></p>
+  <div class="cert-card">
+    <div style="color:var(--muted);font-size:.9rem">Este certificado acredita que</div>
+    <div class="cert-name" id="certName"></div>
+    <div class="cert-level" id="certLevel"></div>
+    <div class="cert-score" id="certScore"></div>
+    <div style="color:var(--muted);font-size:.85rem">puntos obtenidos</div>
+    <div style="margin-top:16px;font-size:.8rem;color:var(--muted)">Synaptic Analytics · <span id="certDate"></span></div>
+  </div>
+  <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+    <button class="btn btn-primary" style="width:auto" onclick="nextLevel()">Siguiente Nivel →</button>
+    <button class="btn btn-ghost btn-sm" onclick="backToHome()">Ver todos los niveles</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<button class="lb-btn" onclick="verRegistros()">📋 Mis registros</button>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+// CONFIGURACIÓN — pega aquí tu URL de Apps Script
+// ════════════════════════════════════════════════════════════════
+const APPS_SCRIPT_URL = 'TU_URL_APPS_SCRIPT_AQUI';
+
+// ════════════════════════════════════════════════════════════════
+// DATOS: NIVELES Y EJERCICIOS
+// ════════════════════════════════════════════════════════════════
+const NIVELES = [
+  {
+    id: 'basico', nombre: 'Básico', emoji: '🌱',
+    desc: 'Fórmulas esenciales para empezar. SUMA, PROMEDIO, SI y más.',
+    color: '#00e676', colorRgb: '0,230,118', accent: '--green',
+    topics: ['SUMA', 'PROMEDIO', 'CONTAR', 'SI', 'HOY'],
+    ejercicios: [
+      {
+        titulo: 'Función SUMA',
+        descripcion: '📌 Tienes una lista de ventas. Usa <code>=SUMA()</code> para sumar el rango <strong>B2:B6</strong>.',
+        pista: 'La función SUMA en Excel es: =SUMA(inicio:fin)  — por ejemplo =SUMA(A1:A5)',
+        tabla: {
+          cols: ['A','B'], headers: ['Vendedor','Ventas'],
+          rows: [['Ana','450000'],['Luis','320000'],['María','580000'],['Carlos','290000'],['Laura','410000']],
+          resultCell: {row:7, col:1, label:'TOTAL'},
+          resultRef: 'B7'
+        },
+        respuestaCorrecta: ['=suma(b2:b6)', '=suma(b2:b6)', '=suma($b$2:$b$6)'],
+        respuestaDisplay: '=SUMA(B2:B6)',
+        puntaje: 10
+      },
+      {
+        titulo: 'Función PROMEDIO',
+        descripcion: '📌 Calcula el promedio de notas del grupo usando <code>=PROMEDIO()</code> sobre el rango <strong>B2:B5</strong>.',
+        pista: '=PROMEDIO(rango) calcula la media aritmética de los valores.',
+        tabla: {
+          cols: ['A','B'], headers: ['Estudiante','Nota'],
+          rows: [['Valentina','85'],['Sebastián','92'],['Isabella','78'],['Alejandro','95']],
+          resultCell: {row:6, col:1, label:'PROMEDIO'},
+          resultRef: 'B6'
+        },
+        respuestaCorrecta: ['=promedio(b2:b5)'],
+        respuestaDisplay: '=PROMEDIO(B2:B5)',
+        puntaje: 10
+      },
+      {
+        titulo: 'Función CONTAR',
+        descripcion: '📌 Cuenta cuántos pedidos tienen cantidad registrada (números) en el rango <strong>B2:B7</strong> con <code>=CONTAR()</code>.',
+        pista: '=CONTAR() solo cuenta celdas con números. =CONTARA() cuenta celdas no vacías.',
+        tabla: {
+          cols: ['A','B'], headers: ['Pedido','Cantidad'],
+          rows: [['P001','5'],['P002',''],['P003','12'],['P004','8'],['P005',''],['P006','3']],
+          resultCell: {row:8, col:1, label:'N° pedidos'},
+          resultRef: 'B8'
+        },
+        respuestaCorrecta: ['=contar(b2:b7)'],
+        respuestaDisplay: '=CONTAR(B2:B7)',
+        puntaje: 10
+      },
+      {
+        titulo: 'Función SI',
+        descripcion: '📌 En <strong>C2</strong>, escribe una fórmula SI que diga "Aprobado" si B2 >= 60, o "Reprobado" si no.',
+        pista: 'La función SI: =SI(condición, "valor_si_verdadero", "valor_si_falso")',
+        tabla: {
+          cols: ['A','B','C'], headers: ['Nombre','Nota','Estado'],
+          rows: [['Pedro','72',''],['Rosa','45',''],['Miguel','88',''],['Clara','55','']],
+          resultCell: {row:2, col:2, label:'Estado'},
+          resultRef: 'C2'
+        },
+        respuestaCorrecta: ['=si(b2>=60,"aprobado","reprobado")', '=si(b2>=60,"Aprobado","Reprobado")'],
+        respuestaDisplay: '=SI(B2>=60,"Aprobado","Reprobado")',
+        puntaje: 15
+      },
+      {
+        titulo: 'Función HOY y TEXTO',
+        descripcion: '📌 Usa <code>=HOY()</code> para obtener la fecha actual. Escribe exactamente <strong>=HOY()</strong> en la celda.',
+        pista: '=HOY() devuelve la fecha actual. =AHORA() devuelve fecha y hora. No necesitan argumentos.',
+        tabla: {
+          cols: ['A','B'], headers: ['Concepto','Valor'],
+          rows: [['Empresa','Synaptic Analytics'],['Ciudad','Bogotá'],['Fecha Reporte','']],
+          resultCell: {row:4, col:1, label:'Fecha'},
+          resultRef: 'B4'
+        },
+        respuestaCorrecta: ['=hoy()', '=today()'],
+        respuestaDisplay: '=HOY()',
+        puntaje: 10
+      }
+    ]
+  },
+  {
+    id: 'intermedio', nombre: 'Intermedio', emoji: '🚀',
+    desc: 'BUSCARV, SUMAR.SI, fórmulas anidadas y más poder.',
+    color: '#1a73e8', colorRgb: '26,115,232', accent: '--blue',
+    topics: ['BUSCARV','SUMAR.SI','CONTAR.SI','SI+Y','ÍNDICE-COINCIDIR'],
+    ejercicios: [
+      {
+        titulo: 'BUSCARV — Búsqueda Vertical',
+        descripcion: '📌 Usa <code>=BUSCARV()</code> para encontrar el precio del producto "Laptop" en la tabla. El valor a buscar está en <strong>E2</strong>, la tabla es <strong>A2:C5</strong>, y quieres la columna 3 (precio).',
+        pista: '=BUSCARV(valor_buscado, rango_tabla, num_columna, FALSO) — FALSO = coincidencia exacta',
+        tabla: {
+          cols: ['A','B','C','D','E','F'], headers: ['Producto','Código','Precio','','Buscar','Resultado'],
+          rows: [['Monitor','PRD001','850000','','Laptop',''],['Laptop','PRD002','2500000','','',''],['Teclado','PRD003','120000','','',''],['Mouse','PRD004','85000','','','']],
+          resultCell: {row:2, col:5, label:'Precio'},
+          resultRef: 'F2'
+        },
+        respuestaCorrecta: ['=buscarv(e2,a2:c5,3,falso)', '=buscarv(e2,a2:c5,3,0)', '=vlookup(e2,a2:c5,3,false)'],
+        respuestaDisplay: '=BUSCARV(E2,A2:C5,3,FALSO)',
+        puntaje: 20
+      },
+      {
+        titulo: 'SUMAR.SI — Suma Condicional',
+        descripcion: '📌 Suma solo las ventas del vendedor "Ana" usando <code>=SUMAR.SI()</code>. El rango de criterio es <strong>A2:A7</strong>, el criterio es "Ana", y el rango de suma es <strong>B2:B7</strong>.',
+        pista: '=SUMAR.SI(rango_criterio, criterio, rango_suma)',
+        tabla: {
+          cols: ['A','B'], headers: ['Vendedor','Venta'],
+          rows: [['Ana','450000'],['Luis','320000'],['Ana','380000'],['Carlos','290000'],['Ana','510000'],['Luis','420000']],
+          resultCell: {row:8, col:1, label:'Total Ana'},
+          resultRef: 'B8'
+        },
+        respuestaCorrecta: ['=sumar.si(a2:a7,"ana",b2:b7)', '=sumar.si(a2:a7,"Ana",b2:b7)', '=sumif(a2:a7,"Ana",b2:b7)'],
+        respuestaDisplay: '=SUMAR.SI(A2:A7,"Ana",B2:B7)',
+        puntaje: 20
+      },
+      {
+        titulo: 'CONTAR.SI — Contar con Condición',
+        descripcion: '📌 Cuenta cuántos productos tienen stock mayor a 50 usando <code>=CONTAR.SI()</code> sobre el rango <strong>B2:B6</strong>.',
+        pista: '=CONTAR.SI(rango, criterio) — el criterio puede ser ">50", "Activo", A1, etc.',
+        tabla: {
+          cols: ['A','B'], headers: ['Producto','Stock'],
+          rows: [['Camisa','120'],['Pantalón','35'],['Zapatos','80'],['Chaqueta','15'],['Sombrero','65']],
+          resultCell: {row:7, col:1, label:'Con stock >50'},
+          resultRef: 'B7'
+        },
+        respuestaCorrecta: ['=contar.si(b2:b6,">50")', '=countif(b2:b6,">50")'],
+        respuestaDisplay: '=CONTAR.SI(B2:B6,">50")',
+        puntaje: 20
+      },
+      {
+        titulo: 'SI anidado con Y (AND)',
+        descripcion: '📌 Escribe una fórmula que devuelva "Bono" si el vendedor tiene ventas > 500000 Y clientes > 10, sino "Sin bono". Usa <strong>B2</strong> para ventas y <strong>C2</strong> para clientes.',
+        pista: '=SI(Y(condicion1, condicion2), "verdadero", "falso") — Y() verifica que AMBAS condiciones se cumplan',
+        tabla: {
+          cols: ['A','B','C','D'], headers: ['Vendedor','Ventas','Clientes','Resultado'],
+          rows: [['Ana','620000','12',''],['Luis','480000','9',''],['María','750000','15',''],['Carlos','530000','8','']],
+          resultCell: {row:2, col:3, label:'Resultado'},
+          resultRef: 'D2'
+        },
+        respuestaCorrecta: ['=si(y(b2>500000,c2>10),"bono","sin bono")', '=si(y(b2>500000,c2>10),"Bono","Sin bono")'],
+        respuestaDisplay: '=SI(Y(B2>500000,C2>10),"Bono","Sin bono")',
+        puntaje: 25
+      },
+      {
+        titulo: 'ÍNDICE + COINCIDIR',
+        descripcion: '📌 Usa <code>=ÍNDICE()</code> + <code>=COINCIDIR()</code> para buscar el salario de "María" (en E2). Salarios en B2:B5, nombres en A2:A5.',
+        pista: '=ÍNDICE(rango_resultado, COINCIDIR(valor, rango_busqueda, 0)) — alternativa poderosa a BUSCARV',
+        tabla: {
+          cols: ['A','B','C','D','E','F'], headers: ['Empleado','Salario','','','Buscar','Salario'],
+          rows: [['Juan','3500000','','','María',''],['María','4200000','','','',''],['Pedro','2800000','','','',''],['Ana','5100000','','','','']],
+          resultCell: {row:2, col:5, label:'Salario'},
+          resultRef: 'F2'
+        },
+        respuestaCorrecta: ['=índice(b2:b5,coincidir(e2,a2:a5,0))', '=indice(b2:b5,coincidir(e2,a2:a5,0))', '=index(b2:b5,match(e2,a2:a5,0))'],
+        respuestaDisplay: '=ÍNDICE(B2:B5,COINCIDIR(E2,A2:A5,0))',
+        puntaje: 25
+      }
+    ]
+  },
+  {
+    id: 'avanzado', nombre: 'Avanzado', emoji: '⚡',
+    desc: 'XLOOKUP, SUMIFS, funciones de texto y fecha para analítica profesional.',
+    color: '#9c27b0', colorRgb: '156,39,176', accent: '--purple',
+    topics: ['BUSCARX','SUMAR.SI.CONJUNTO','EXTRAE','DIAS.LAB','Tablas'],
+    ejercicios: [
+      {
+        titulo: 'BUSCARX (XLOOKUP) — El futuro de la búsqueda',
+        descripcion: '📌 Usa <code>=BUSCARX()</code> para buscar el email del cliente "Empresa ABC" (en E2). Nombres en A2:A4, emails en C2:C4. Si no encuentra, que diga "No encontrado".',
+        pista: '=BUSCARX(valor_buscar, rango_busqueda, rango_resultado, "si_no_encuentra") — no necesita número de columna!',
+        tabla: {
+          cols: ['A','B','C','D','E','F'], headers: ['Cliente','Ciudad','Email','','Buscar','Email'],
+          rows: [['Empresa ABC','Bogotá','abc@empresa.co','','Empresa ABC',''],['Tech SAS','Medellín','tech@sas.co','','',''],['DataCo','Cali','data@co.co','','','']],
+          resultCell: {row:2, col:5, label:'Email'},
+          resultRef: 'F2'
+        },
+        respuestaCorrecta: ['=buscarx(e2,a2:a4,c2:c4,"no encontrado")', '=xlookup(e2,a2:a4,c2:c4,"no encontrado")', '=buscarx(e2,a2:a4,c2:c4,"No encontrado")'],
+        respuestaDisplay: '=BUSCARX(E2,A2:A4,C2:C4,"No encontrado")',
+        puntaje: 30
+      },
+      {
+        titulo: 'SUMAR.SI.CONJUNTO — Múltiples Condiciones',
+        descripcion: '📌 Suma las ventas solo cuando la región sea "Norte" Y el producto sea "A". Ventas en C2:C7, regiones en A2:A7, productos en B2:B7.',
+        pista: '=SUMAR.SI.CONJUNTO(rango_suma, rango1, criterio1, rango2, criterio2, ...)',
+        tabla: {
+          cols: ['A','B','C'], headers: ['Región','Producto','Ventas'],
+          rows: [['Norte','A','500000'],['Sur','A','320000'],['Norte','B','280000'],['Norte','A','450000'],['Sur','B','390000'],['Norte','A','610000']],
+          resultCell: {row:8, col:2, label:'Norte+A'},
+          resultRef: 'C8'
+        },
+        respuestaCorrecta: ['=sumar.si.conjunto(c2:c7,a2:a7,"norte",b2:b7,"a")', '=sumar.si.conjunto(c2:c7,a2:a7,"Norte",b2:b7,"A")', '=sumifs(c2:c7,a2:a7,"Norte",b2:b7,"A")'],
+        respuestaDisplay: '=SUMAR.SI.CONJUNTO(C2:C7,A2:A7,"Norte",B2:B7,"A")',
+        puntaje: 30
+      },
+      {
+        titulo: 'EXTRAE — Extraer texto',
+        descripcion: '📌 Extrae los primeros 3 caracteres del código en A2 usando <code>=EXTRAE()</code> o <code>=IZQUIERDA()</code>.',
+        pista: '=EXTRAE(texto, posición_inicio, num_caracteres) ó =IZQUIERDA(texto, num_caracteres)',
+        tabla: {
+          cols: ['A','B'], headers: ['Código Completo','Prefijo'],
+          rows: [['BOG-2024-001',''],['MED-2024-002',''],['CAL-2024-003',''],['BAQ-2024-004','']],
+          resultCell: {row:2, col:1, label:'Prefijo'},
+          resultRef: 'B2'
+        },
+        respuestaCorrecta: ['=extrae(a2,1,3)', '=izquierda(a2,3)', '=left(a2,3)', '=mid(a2,1,3)'],
+        respuestaDisplay: '=IZQUIERDA(A2,3)',
+        puntaje: 25
+      },
+      {
+        titulo: 'DIAS.LAB — Días laborales',
+        descripcion: '📌 Calcula los días laborales entre la fecha de inicio (A2) y fin (B2) usando <code>=DIAS.LAB()</code>.',
+        pista: '=DIAS.LAB(fecha_inicio, fecha_fin) devuelve días hábiles (excluye sábados y domingos)',
+        tabla: {
+          cols: ['A','B','C'], headers: ['Inicio','Fin','Días hábiles'],
+          rows: [['01/11/2026','30/11/2026',''],['01/10/2026','31/10/2026',''],['01/09/2026','30/09/2026','']],
+          resultCell: {row:2, col:2, label:'Días hábiles'},
+          resultRef: 'C2'
+        },
+        respuestaCorrecta: ['=dias.lab(a2,b2)', '=networkdays(a2,b2)', '=dias.lab.intl(a2,b2)'],
+        respuestaDisplay: '=DIAS.LAB(A2,B2)',
+        puntaje: 25
+      },
+      {
+        titulo: 'TEXTO — Formatear números',
+        descripcion: '📌 Usa <code>=TEXTO()</code> para mostrar el valor de B2 como moneda colombiana con formato <strong>"$#,##0"</strong>.',
+        pista: '=TEXTO(valor, "formato") — los formatos van entre comillas: "0.00", "$#,##0", "dd/mm/yyyy"',
+        tabla: {
+          cols: ['A','B','C'], headers: ['Descripción','Valor','Formateado'],
+          rows: [['Salario base','4500000',''],['Bonificación','750000',''],['Total bruto','5250000','']],
+          resultCell: {row:2, col:2, label:'Formateado'},
+          resultRef: 'C2'
+        },
+        respuestaCorrecta: ['=texto(b2,"$#,##0")', '=text(b2,"$#,##0")', '=texto(b2,"$ #,##0")'],
+        respuestaDisplay: '=TEXTO(B2,"$#,##0")',
+        puntaje: 30
+      }
+    ]
+  }
+];
+
+// ════════════════════════════════════════════════════════════════
+// ESTADO GLOBAL
+// ════════════════════════════════════════════════════════════════
+let usuario = {nombre:'', email:''};
+let progreso = JSON.parse(localStorage.getItem('sx_progress') || '{}');
+let nivelActual = null, exActual = 0, puntajeNivel = 0, respondido = false;
+
+// ════════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════════
+function init(){
+  const saved = localStorage.getItem('sx_user');
+  if(saved){ usuario = JSON.parse(saved); mostrarUsuario(); document.getElementById('regOverlay').classList.add('hidden'); }
+  renderLevels();
+}
+
+function registrar(){
+  const n = document.getElementById('regNombre').value.trim();
+  const e = document.getElementById('regEmail').value.trim();
+  if(!n || !e){ toast('Por favor ingresa tu nombre y correo'); return; }
+  usuario = {nombre:n, email:e};
+  localStorage.setItem('sx_user', JSON.stringify(usuario));
+  mostrarUsuario();
+  document.getElementById('regOverlay').classList.add('hidden');
+  enviarASheets({evento:'registro', nombre:n, email:e, nivel:'', puntaje:0});
+  toast('¡Bienvenido/a, ' + n.split(' ')[0] + '! 🎉');
+}
+
+function mostrarUsuario(){
+  document.getElementById('userChip').style.display = 'flex';
+  document.getElementById('userName').textContent = usuario.nombre.split(' ')[0];
+  document.getElementById('userInitial').textContent = usuario.nombre[0].toUpperCase();
+  actualizarPuntajeTotal();
+}
+
+function actualizarPuntajeTotal(){
+  const total = Object.values(progreso).reduce((s,p)=>s+(p.puntaje||0),0);
+  document.getElementById('totalScore').textContent = total;
+}
+
+// ════════════════════════════════════════════════════════════════
+// RENDER NIVELES
+// ════════════════════════════════════════════════════════════════
+function renderLevels(){
+  const grid = document.getElementById('levelsGrid');
+  grid.innerHTML = '';
+  NIVELES.forEach((nv,i)=>{
+    const p = progreso[nv.id] || {completado:false, puntaje:0};
+    const prev = i===0 || (progreso[NIVELES[i-1].id]||{}).completado;
+    const card = document.createElement('div');
+    card.className = 'level-card' + (prev?'':' locked');
+    card.style.setProperty('--accent', nv.color);
+    card.style.setProperty('--accent-rgb', nv.colorRgb);
+    card.innerHTML = `
+      <div class="level-badge">${nv.emoji} ${nv.nombre}</div>
+      <h3>${nv.nombre} — ${nv.desc.split('.')[0]}</h3>
+      <p>${nv.desc}</p>
+      <div class="level-topics">${nv.topics.map(t=>`<span class="topic-tag">${t}</span>`).join('')}</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${p.completado?100:0}%;background:${nv.color}"></div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+        <div class="stars">
+          ${[1,2,3,4,5].map(s=>`<span class="star ${p.puntaje>=(s*nv.ejercicios.reduce((a,e)=>a+e.puntaje,0)/5)?'on':''}">⭐</span>`).join('')}
+        </div>
+        <span style="font-size:.85rem;color:var(--muted)">${p.puntaje||0} pts</span>
+      </div>
+      ${!prev?'<div style="position:absolute;top:16px;right:16px;font-size:1.2rem">🔒</div>':''}
+    `;
+    if(prev) card.onclick = ()=>iniciarNivel(nv);
+    grid.appendChild(card);
+  });
+}
+
+// ════════════════════════════════════════════════════════════════
+// JUEGO
+// ════════════════════════════════════════════════════════════════
+function iniciarNivel(nv){
+  nivelActual = nv; exActual = 0; puntajeNivel = 0;
+  document.getElementById('homeView').style.display='none';
+  document.getElementById('completionView').classList.remove('active');
+  document.getElementById('gameView').classList.add('active');
+  document.getElementById('levelLabel').textContent = nv.emoji + ' Nivel ' + nv.nombre;
+  renderEjercicio();
+}
+
+function renderEjercicio(){
+  const ex = nivelActual.ejercicios[exActual];
+  respondido = false;
+  document.getElementById('exTitle').textContent = ex.titulo;
+  document.getElementById('exCounter').textContent = `${exActual+1} / ${nivelActual.ejercicios.length}`;
+  document.getElementById('levelScore').textContent = puntajeNivel;
+  document.getElementById('exProgress').style.width = (exActual/nivelActual.ejercicios.length*100) + '%';
+
+  const container = document.getElementById('exerciseContainer');
+  container.innerHTML = '';
+
+  // Tarjeta ejercicio
+  const card = document.createElement('div');
+  card.className = 'ex-card';
+  card.innerHTML = `
+    <div class="ex-description">${ex.descripcion}</div>
+    <div class="ex-hint">💡 <div>${ex.pista}</div></div>
+    ${renderSpreadsheet(ex.tabla)}
+    <div class="formula-bar">
+      <div class="cell-ref">${ex.tabla.resultRef}</div>
+      <div class="fx-icon">fx</div>
+      <input class="formula-input" id="formulaInput" placeholder="Escribe tu fórmula aquí..."
+        onkeydown="if(event.key==='Enter')verificar()" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="feedback hidden" id="feedback"></div>
+    <div class="action-row">
+      <button class="btn btn-check" onclick="verificar()">✓ Verificar</button>
+      <button class="btn btn-skip" onclick="saltar()">Saltar →</button>
+      <button class="btn btn-next" id="btnNext" style="display:none" onclick="siguiente()">Siguiente ejercicio →</button>
+    </div>
+  `;
+  container.appendChild(card);
+  setTimeout(()=>document.getElementById('formulaInput').focus(), 100);
+}
+
+function renderSpreadsheet(t){
+  const cols = t.cols;
+  const colW = Math.floor(100/cols.length);
+  let html = `<div class="spreadsheet" style="margin-bottom:16px">`;
+  // Row de encabezado de columnas
+  html += `<div class="ss-row ss-header" style="grid-template-columns:40px ${cols.map(()=>colW+'%').join(' ')}">`;
+  html += `<div class="ss-cell header"></div>`;
+  cols.forEach(c=>html+=`<div class="ss-cell header">${c}</div>`);
+  html += '</div>';
+  // Filas de datos
+  t.rows.forEach((row,ri)=>{
+    html += `<div class="ss-row" style="grid-template-columns:40px ${cols.map(()=>colW+'%').join(' ')}">`;
+    html += `<div class="ss-cell row-num">${ri+2}</div>`;
+    row.forEach((cell,ci)=>{
+      const isActive = (ri+2===t.resultCell.row && ci===t.resultCell.col);
+      html += `<div class="ss-cell${isActive?' active-cell':''}">
+        ${isActive?`<span id="resultPreview" style="color:var(--muted);font-style:italic">${t.resultCell.label}...</span>`:(cell||'')}
+      </div>`;
+    });
+    html += '</div>';
+  });
+  // Fila de resultado
+  if(t.rows.length+2 <= t.resultCell.row){
+    html += `<div class="ss-row" style="grid-template-columns:40px ${cols.map(()=>colW+'%').join(' ')}">`;
+    html += `<div class="ss-cell row-num">${t.resultCell.row}</div>`;
+    cols.forEach((_,ci)=>{
+      const isActive = ci===t.resultCell.col;
+      html += `<div class="ss-cell${isActive?' active-cell result':''}">
+        ${isActive?`<span id="resultPreview" style="color:var(--muted);font-style:italic">${t.resultCell.label}...</span>`:''}
+      </div>`;
+    });
+    html += '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function verificar(){
+  if(respondido) return;
+  const input = document.getElementById('formulaInput');
+  const val = input.value.trim().toLowerCase().replace(/\s+/g,'');
+  const ex = nivelActual.ejercicios[exActual];
+  const correcto = ex.respuestaCorrecta.some(r=>val===r.toLowerCase().replace(/\s+/g,''));
+  const fb = document.getElementById('feedback');
+  fb.classList.remove('hidden','correct','wrong');
+  respondido = true;
+
+  if(correcto){
+    fb.className = 'feedback correct';
+    fb.innerHTML = '✅ <strong>¡Correcto!</strong> La fórmula <code>' + ex.respuestaDisplay + '</code> es la respuesta. +' + ex.puntaje + ' puntos';
+    puntajeNivel += ex.puntaje;
+    document.getElementById('levelScore').textContent = puntajeNivel;
+    const prev = document.getElementById('resultPreview');
+    if(prev){ prev.textContent = '✓'; prev.style.color='var(--green)'; prev.style.fontStyle='normal'; }
+    lanzarConfetti(8);
+  } else {
+    fb.className = 'feedback wrong';
+    fb.innerHTML = '❌ <strong>Incorrecto.</strong> La respuesta correcta es: <code>' + ex.respuestaDisplay + '</code> — ¡intenta memorizar la estructura!';
+  }
+
+  document.getElementById('btnNext').style.display = 'inline-flex';
+  document.getElementById('btnNext').classList.add('btn');
+}
+
+function saltar(){
+  respondido = true;
+  const ex = nivelActual.ejercicios[exActual];
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback wrong';
+  fb.innerHTML = '⏭️ Ejercicio saltado. La respuesta era: <code>' + ex.respuestaDisplay + '</code>';
+  fb.classList.remove('hidden');
+  document.getElementById('btnNext').style.display = 'inline-flex';
+  document.getElementById('btnNext').classList.add('btn');
+}
+
+function siguiente(){
+  exActual++;
+  if(exActual >= nivelActual.ejercicios.length){
+    completarNivel();
+  } else {
+    renderEjercicio();
+  }
+}
+
+function completarNivel(){
+  progreso[nivelActual.id] = {completado:true, puntaje: puntajeNivel, fecha: new Date().toISOString()};
+  localStorage.setItem('sx_progress', JSON.stringify(progreso));
+  actualizarPuntajeTotal();
+
+  document.getElementById('gameView').classList.remove('active');
+  const cv = document.getElementById('completionView');
+  cv.classList.add('active');
+  cv.style.display = 'block';
+
+  const pmax = nivelActual.ejercicios.reduce((a,e)=>a+e.puntaje,0);
+  const pct = Math.round(puntajeNivel/pmax*100);
+  document.getElementById('trophyIcon').textContent = pct>=80?'🏆':pct>=60?'🥈':'🥉';
+  document.getElementById('compTitle').textContent = '¡Nivel ' + nivelActual.nombre + ' completado!';
+  document.getElementById('compSubtitle').textContent = `Obtuviste ${puntajeNivel} de ${pmax} puntos posibles (${pct}%)`;
+  document.getElementById('certName').textContent = usuario.nombre;
+  document.getElementById('certLevel').textContent = 'Completó el nivel ' + nivelActual.emoji + ' ' + nivelActual.nombre;
+  document.getElementById('certScore').textContent = puntajeNivel;
+  document.getElementById('certDate').textContent = new Date().toLocaleDateString('es-CO');
+
+  lanzarConfetti(30);
+  enviarASheets({evento:'nivel_completado', nombre:usuario.nombre, email:usuario.email, nivel:nivelActual.nombre, puntaje:puntajeNivel, puntaje_max:pmax, porcentaje:pct});
+}
+
+function backToHome(){
+  document.getElementById('homeView').style.display='block';
+  document.getElementById('gameView').classList.remove('active');
+  document.getElementById('completionView').classList.remove('active');
+  document.getElementById('completionView').style.display='none';
+  renderLevels();
+}
+
+function nextLevel(){
+  const idx = NIVELES.findIndex(n=>n.id===nivelActual.id);
+  if(idx+1 < NIVELES.length){
+    iniciarNivel(NIVELES[idx+1]);
+    document.getElementById('completionView').classList.remove('active');
+    document.getElementById('completionView').style.display='none';
+  } else {
+    backToHome();
+    toast('🎉 ¡Completaste todos los niveles!');
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// GOOGLE SHEETS
+// ════════════════════════════════════════════════════════════════
+function enviarASheets(datos){
+  if(!APPS_SCRIPT_URL || APPS_SCRIPT_URL==='TU_URL_APPS_SCRIPT_AQUI') return;
+  fetch(APPS_SCRIPT_URL, {
+    method:'POST',
+    mode:'no-cors',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({...datos, timestamp: new Date().toISOString()})
+  }).catch(()=>{});
+}
+
+function verRegistros(){
+  const total = Object.values(progreso).reduce((s,p)=>s+(p.puntaje||0),0);
+  const nivComp = Object.values(progreso).filter(p=>p.completado).length;
+  toast(`📊 ${usuario.nombre||'Usuario'}: ${nivComp} niveles completados · ${total} puntos totales`);
+}
+
+// ════════════════════════════════════════════════════════════════
+// UTILIDADES
+// ════════════════════════════════════════════════════════════════
+function toast(msg, dur=3500){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), dur);
+}
+
+function lanzarConfetti(n){
+  const colors=['#1a73e8','#00d4ff','#00e676','#ffeb3b','#9c27b0','#ff5252'];
+  for(let i=0;i<n;i++){
+    const el = document.createElement('div');
+    el.className='confetti-piece';
+    el.style.cssText=`left:${Math.random()*100}vw;background:${colors[i%colors.length]};animation-duration:${1.5+Math.random()}s;animation-delay:${Math.random()*.5}s;width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;border-radius:${Math.random()>0.5?'50%':'2px'}`;
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(), 3000);
+  }
+}
+
+init();
+</script>
+</body>
+</html>
